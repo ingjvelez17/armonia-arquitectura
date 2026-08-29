@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Armonía S.A.S. — Panel de arquitectura</title>
+<style>
+  :root{
+    --fondo:#0d1117; --panel:#151b23; --panel2:#1c242e; --borde:#2a3441;
+    --texto:#e6edf3; --tenue:#8d99a8; --acento:#f0a202; --acento2:#4493f8;
+    --ok:#3fb950; --alerta:#d29922; --malo:#f85149; --radio:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--texto);
+       font:15px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif}
+  header{padding:22px 28px;border-bottom:1px solid var(--borde);
+         background:linear-gradient(180deg,#161d26,#0d1117);
+         display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{margin:0;font-size:20px;letter-spacing:.2px}
+  header .sub{color:var(--tenue);font-size:13px}
+  .pill{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:13px}
+  .punto{width:9px;height:9px;border-radius:50%;background:var(--tenue)}
+  main{padding:22px 28px;max-width:1400px;margin:0 auto}
+  .rejilla{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+  .tarjeta{background:var(--panel);border:1px solid var(--borde);border-radius:var(--radio);padding:18px}
+  .tarjeta h2{margin:0 0 4px;font-size:15px;letter-spacing:.4px;text-transform:uppercase;color:var(--acento)}
+  .tarjeta p.ayuda{margin:0 0 14px;color:var(--tenue);font-size:12.5px}
+  .evento{border:1px solid var(--borde);border-radius:10px;padding:12px;margin-bottom:10px;
+          background:var(--panel2);cursor:pointer;transition:border-color .15s}
+  .evento:hover{border-color:var(--acento2)}
+  .evento.sel{border-color:var(--acento);box-shadow:0 0 0 1px var(--acento) inset}
+  .evento b{display:block;font-size:14px}
+  .evento small{color:var(--tenue)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--borde)}
+  th{color:var(--tenue);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+  button{background:var(--acento2);color:#08111c;border:0;border-radius:8px;padding:9px 14px;
+         font-weight:700;cursor:pointer;font-size:13.5px}
+  button:hover{filter:brightness(1.1)} button:disabled{opacity:.45;cursor:not-allowed}
+  button.sec{background:var(--panel2);color:var(--texto);border:1px solid var(--borde)}
+  button.peligro{background:var(--malo);color:#fff}
+  label{display:block;font-size:12px;color:var(--tenue);margin:10px 0 4px}
+  select,input{width:100%;background:var(--panel2);border:1px solid var(--borde);color:var(--texto);
+               border-radius:8px;padding:8px 10px;font-size:13.5px}
+  .fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .fila>*{flex:1}
+  .estado{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;
+          border-radius:999px;border:1px solid var(--borde);background:var(--panel2)}
+  .CERRADO,.listo,.operativo{color:var(--ok);border-color:#1e4d2b}
+  .SEMIABIERTO,.degradado{color:var(--alerta);border-color:#5c4813}
+  .ABIERTO,.caido{color:var(--malo);border-color:#5c1f1c}
+  pre{background:#0a0f16;border:1px solid var(--borde);border-radius:8px;padding:12px;
+      font-size:12px;max-height:270px;overflow:auto;margin:0;white-space:pre-wrap;word-break:break-word}
+  .bitacora div{padding:6px 8px;border-bottom:1px solid var(--borde);font-size:12.5px;font-family:ui-monospace,Consolas,monospace}
+  .bitacora .ok{color:var(--ok)} .bitacora .err{color:var(--malo)} .bitacora .warn{color:var(--alerta)}
+  .metrica{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px dashed #222c37}
+  .metrica span:last-child{font-weight:700;color:var(--acento)}
+  .barra{height:6px;background:#0a0f16;border-radius:4px;overflow:hidden;margin-top:4px}
+  .barra i{display:block;height:100%;background:linear-gradient(90deg,var(--acento2),var(--acento))}
+  footer{padding:20px 28px;color:var(--tenue);font-size:12px;border-top:1px solid var(--borde);margin-top:24px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Armonía S.A.S. · Panel de arquitectura</h1>
+    <div class="sub">Prototipo de microservicios en la nube — Arquitectura de Software, Unidad&nbsp;1</div>
+  </div>
+  <div class="pill"><span class="punto" id="punto"></span><span id="estadoMalla">verificando…</span></div>
+</header>
+
+<main>
+  <div class="rejilla">
+
+    <!-- ------------------------------------------------------------ -->
+    <section class="tarjeta">
+      <h2>1 · Catálogo</h2>
+      <p class="ayuda">Gateway Routing + Cache-Aside. Elige un evento para ver la agregación del BFF.</p>
+      <div id="eventos"></div>
+      <div class="fila"><button class="sec" onclick="cargarEventos(true)">Recargar (ver cache)</button></div>
+      <div id="origenCatalogo" class="sub" style="margin-top:8px;color:var(--tenue);font-size:12px"></div>
+    </section>
+
+    <!-- ------------------------------------------------------------ -->
+    <section class="tarjeta">
+      <h2>2 · Compra (saga)</h2>
+      <p class="ayuda">Saga orquestada + Idempotencia + Compensación. Cada compra imprime sus pasos abajo.</p>
+      <div id="detalleEvento"><em style="color:var(--tenue)">Selecciona un evento…</em></div>
+      <label>Localidad</label><select id="localidad"></select>
+      <div class="fila">
+        <div><label>Cantidad</label><input id="cantidad" type="number" min="1" max="6" value="2"></div>
+        <div><label>Tarifa</label>
+          <select id="tarifa">
+            <option value="general">General</option>
+            <option value="estudiante">Estudiante (-30%)</option>
+            <option value="club">Club de fans (-15%)</option>
+            <option value="dinamica">Dinámica (por demanda)</option>
+          </select></div>
+      </div>
+      <div class="fila">
+        <div><label>Medio de pago</label>
+          <select id="medio"><option value="tarjeta">Tarjeta</option><option value="pse">PSE</option><option value="billetera">Billetera</option></select></div>
+        <div><label>Cliente</label><input id="cliente" value="juan.velez"></div>
+      </div>
+      <div class="fila" style="margin-top:14px">
+        <button onclick="comprar(false)">Comprar</button>
+        <button class="sec" onclick="comprar(true)">Reenviar misma clave (idempotencia)</button>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ -->
+    <section class="tarjeta">
+      <h2>3 · Ingeniería del caos</h2>
+      <p class="ayuda">Rompe la pasarela de pagos y observa el cortacircuitos y la compensación.</p>
+      <label>Tasa de fallo de la pasarela: <b id="valTasa">0%</b></label>
+      <input id="tasa" type="range" min="0" max="100" value="0" oninput="valTasa.textContent=this.value+'%'">
+      <label>Latencia extra (ms): <b id="valLat">0</b></label>
+      <input id="lat" type="range" min="0" max="4000" step="100" value="0" oninput="valLat.textContent=this.value">
+      <div class="fila" style="margin-top:14px">
+        <button onclick="aplicarCaos()">Aplicar</button>
+        <button class="peligro" onclick="tumbarPagos()">Tumbar pagos</button>
+        <button class="sec" onclick="restaurar()">Restaurar</button>
+      </div>
+      <div style="margin-top:14px">
+        <button class="sec" style="width:100%" onclick="rafaga()">Ráfaga de 10 compras (abre el circuito)</button>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ -->
+    <section class="tarjeta">
+      <h2>4 · Salud de la malla</h2>
+      <p class="ayuda">Health Endpoint Monitoring agregado en el gateway.</p>
+      <table><thead><tr><th>Servicio</th><th>Estado</th><th>Latencia</th></tr></thead>
+        <tbody id="tablaSalud"></tbody></table>
+      <h2 style="margin-top:18px">Cortacircuitos</h2>
+      <table><thead><tr><th>Destino</th><th>Estado</th><th>Fallos</th><th>Cortes</th></tr></thead>
+        <tbody id="tablaCircuitos"></tbody></table>
+    </section>
+
+    <!-- ------------------------------------------------------------ -->
+    <section class="tarjeta">
+      <h2>5 · Métricas en vivo</h2>
+      <p class="ayuda">Sagas, cache, CQRS y colas. Se refresca cada 2 s.</p>
+      <div id="metricas"></div>
+    </section>
+
+    <!-- ------------------------------------------------------------ -->
+    <section class="tarjeta">
+      <h2>6 · Notificaciones asíncronas</h2>
+      <p class="ayuda">Publisher/Subscriber + Competing Consumers. No bloquean la compra.</p>
+      <div class="bitacora" id="bandeja" style="max-height:300px;overflow:auto"></div>
+    </section>
+
+    <!-- ------------------------------------------------------------ -->
+    <section class="tarjeta" style="grid-column:1/-1">
+      <h2>7 · Bitácora de la demostración</h2>
+      <p class="ayuda">Traza de cada operación con su correlation id, estado HTTP y tiempo.</p>
+      <div class="bitacora" id="bitacora" style="max-height:260px;overflow:auto"></div>
+      <details style="margin-top:12px"><summary style="cursor:pointer;color:var(--tenue)">Última respuesta cruda (JSON)</summary>
+        <pre id="crudo">—</pre></details>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Prototipo académico · Juan Esteban Vélez Venegas · Arquitectura de Software ·
+  API key de demostración: <code>demo-armonia-2026</code>
+</footer>
+
+<script>
+const CLAVE = 'demo-armonia-2026';
+let eventoSel = null, claveIdempotencia = null, ultimaClave = null;
+
+const $ = (id) => document.getElementById(id);
+const pesos = (n) => '$' + Number(n || 0).toLocaleString('es-CO');
+
+function trazar(texto, clase = '') {
+  const linea = document.createElement('div');
+  linea.className = clase;
+  linea.textContent = new Date().toLocaleTimeString('es-CO') + '  ' + texto;
+  $('bitacora').prepend(linea);
+  while ($('bitacora').children.length > 120) $('bitacora').lastChild.remove();
+}
+
+async function api(metodo, ruta, cuerpo, cabeceras = {}) {
+  const t0 = performance.now();
+  const r = await fetch(ruta, {
+    method: metodo,
+    headers: { 'content-type': 'application/json', 'x-api-key': CLAVE, ...cabeceras },
+    body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+  });
+  const datos = await r.json().catch(() => ({}));
+  return { estado: r.status, ms: Math.round(performance.now() - t0), datos,
+           cid: r.headers.get('x-correlation-id') };
+}
+
+/* ---------------- catálogo ---------------- */
+async function cargarEventos(manual = false) {
+  const r = await api('GET', '/api/eventos');
+  $('origenCatalogo').textContent = `origen: ${r.datos.origen} · ${r.ms} ms · ${r.datos.total} eventos`;
+  if (manual) trazar(`GET /api/eventos → ${r.estado} (${r.ms} ms, origen ${r.datos.origen})`, 'ok');
+  $('eventos').innerHTML = '';
+  for (const e of r.datos.eventos ?? []) {
+    const div = document.createElement('div');
+    div.className = 'evento' + (eventoSel === e.id ? ' sel' : '');
+    div.innerHTML = `<b>${e.nombre}</b><small>${e.artista} · ${e.ciudad} · ${new Date(e.fecha).toLocaleDateString('es-CO')}</small>`;
+    div.onclick = () => seleccionar(e.id);
+    $('eventos').appendChild(div);
+  }
+  if (!eventoSel && r.datos.eventos?.length) seleccionar(r.datos.eventos[0].id);
+}
+
+async function seleccionar(id) {
+  eventoSel = id;
+  document.querySelectorAll('.evento').forEach((n, i) => n.classList.remove('sel'));
+  const r = await api('GET', '/api/bff/evento/' + id);
+  trazar(`GET /api/bff/evento/${id} → ${r.estado} (${r.ms} ms, 3 servicios agregados)`, 'ok');
+  const ev = r.datos.evento;
+  $('detalleEvento').innerHTML =
+    `<b>${ev.nombre}</b><br><small style="color:var(--tenue)">${ev.escenario} · ${ev.ciudad}</small>
+     <table style="margin-top:10px"><thead><tr><th>Loc.</th><th>Precio</th><th>Disp.</th></tr></thead><tbody>` +
+    r.datos.localidades.map((l) =>
+      `<tr><td>${l.nombre}</td><td>${pesos(l.precioCOP)}</td><td>${l.disponibles ?? '—'}</td></tr>`).join('') +
+    '</tbody></table>';
+  $('localidad').innerHTML = r.datos.localidades
+    .map((l) => `<option value="${l.codigo}">${l.nombre} — ${pesos(l.precioCOP)}</option>`).join('');
+  cargarEventos();
+}
+
+/* ---------------- compra ---------------- */
+async function comprar(reutilizarClave) {
+  if (!eventoSel) return;
+  claveIdempotencia = reutilizarClave && ultimaClave ? ultimaClave : crypto.randomUUID();
+  ultimaClave = claveIdempotencia;
+  const cuerpo = {
+    eventoId: eventoSel,
+    localidad: $('localidad').value,
+    cantidad: Number($('cantidad').value),
+    cliente: $('cliente').value,
+    tipoTarifa: $('tarifa').value,
+    medioDePago: $('medio').value,
+  };
+  const r = await api('POST', '/api/reservas', cuerpo, { 'idempotency-key': claveIdempotencia });
+  $('crudo').textContent = JSON.stringify(r.datos, null, 2);
+
+  if (r.estado === 201) {
+    trazar(`POST /api/reservas → 201 ${r.datos.id} · ${pesos(r.datos.totalCOP)} · ${r.ms} ms · cid ${(r.cid||'').slice(0,8)}`, 'ok');
+  } else if (r.estado === 200 && r.datos.reutilizadaPorIdempotencia) {
+    trazar(`POST /api/reservas → 200 IDEMPOTENTE: se devolvió ${r.datos.id} sin cobrar de nuevo`, 'warn');
+  } else {
+    trazar(`POST /api/reservas → ${r.estado} ${r.datos.error} · compensación ejecutada`, 'err');
+  }
+  seleccionar(eventoSel);
+  refrescar();
+}
+
+async function rafaga() {
+  trazar('Lanzando 10 compras seguidas…', 'warn');
+  for (let i = 0; i < 10; i += 1) {
+    const r = await api('POST', '/api/reservas', {
+      eventoId: eventoSel, localidad: $('localidad').value, cantidad: 1, cliente: 'rafaga-' + i,
+    }, { 'idempotency-key': crypto.randomUUID() });
+    const causa = r.datos?.detalle?.causa ?? r.datos?.error ?? 'ok';
+    const cortado = String(causa).includes('Cortacircuitos ABIERTO');
+    trazar(`  #${i + 1} → ${r.estado} en ${r.ms} ms ${cortado ? '· CORTOCIRCUITO (falla rápido)' : ''}`,
+           r.estado === 201 ? 'ok' : cortado ? 'err' : 'warn');
+    refrescar();
+  }
+}
+
+/* ---------------- caos ---------------- */
+const aplicarCaos = async () => {
+  const r = await api('POST', '/api/caos', {
+    tasaFallo: Number($('tasa').value) / 100, latenciaExtraMs: Number($('lat').value),
+  });
+  trazar(`Caos aplicado: fallo ${$('tasa').value}%, latencia +${$('lat').value} ms`, 'warn');
+};
+const tumbarPagos = async () => { await api('POST', '/api/caos', { caido: true }); trazar('Pasarela de pagos TUMBADA', 'err'); refrescar(); };
+const restaurar = async () => {
+  $('tasa').value = 0; $('lat').value = 0; $('valTasa').textContent = '0%'; $('valLat').textContent = '0';
+  await api('POST', '/api/caos', { caido: false, tasaFallo: 0, latenciaExtraMs: 0 });
+  trazar('Pasarela restaurada', 'ok'); refrescar();
+};
+
+/* ---------------- panel ---------------- */
+async function refrescar() {
+  const [salud, panel, bandeja] = await Promise.all([
+    api('GET', '/api/salud'), api('GET', '/api/panel'), api('GET', '/api/notificaciones?limite=12'),
+  ]);
+
+  const g = salud.datos.estadoGeneral ?? 'caido';
+  $('estadoMalla').textContent = `${g} · ${salud.datos.saludables}/${salud.datos.total}`;
+  $('punto').style.background = g === 'operativo' ? 'var(--ok)' : g === 'degradado' ? 'var(--alerta)' : 'var(--malo)';
+  $('tablaSalud').innerHTML = (salud.datos.servicios ?? []).map((s) =>
+    `<tr><td>${s.servicio}</td><td><span class="estado ${s.estado}">${s.estado}</span></td><td>${s.latenciaMs} ms</td></tr>`).join('');
+
+  const circuitos = [
+    ...(panel.datos.gateway?.circuitos ?? []).map((c) => ({ ...c, desde: 'gateway' })),
+    ...(panel.datos.reservas?.dependencias ?? []).map((c) => ({ ...c, desde: 'reservas' })),
+  ];
+  $('tablaCircuitos').innerHTML = circuitos.map((c) =>
+    `<tr><td>${c.desde} → ${c.destino}</td>
+         <td><span class="estado ${c.circuito.estado}">${c.circuito.estado}</span></td>
+         <td>${c.circuito.fallos}</td><td>${c.circuito.aperturas}</td></tr>`).join('');
+
+  const m = panel.datos.reservas?.metricas ?? {};
+  const cache = panel.datos.catalogo?.cache ?? {};
+  const colas = panel.datos.broker?.colas ?? [];
+  const filas = [
+    ['Sagas iniciadas', m.sagasIniciadas ?? 0],
+    ['Sagas completadas', m.sagasCompletadas ?? 0],
+    ['Sagas compensadas', m.sagasCompensadas ?? 0],
+    ['Conflictos de concurrencia', m.conflictosDeConcurrencia ?? 0],
+    ['Respuestas idempotentes', m.respuestasIdempotentes ?? 0],
+    ['Eventos aplicados a la vista CQRS', panel.datos.catalogo?.proyeccionCQRS?.eventosAplicados ?? 0],
+    ['Cobros aprobados', panel.datos.pagos?.metricas?.aprobados ?? 0],
+    ['Fallos inyectados', panel.datos.pagos?.metricas?.fallosInyectados ?? 0],
+  ];
+  $('metricas').innerHTML =
+    filas.map(([k, v]) => `<div class="metrica"><span>${k}</span><span>${v}</span></div>`).join('') +
+    `<div class="metrica"><span>Aciertos de caché</span><span>${((cache.tasaAciertos ?? 0) * 100).toFixed(1)}%</span></div>
+     <div class="barra"><i style="width:${(cache.tasaAciertos ?? 0) * 100}%"></i></div>` +
+    colas.map((c) => `<div class="metrica"><span>Cola «${c.nombre}»</span><span>${c.pendientes} pend. · ${c.dlq} DLQ</span></div>`).join('');
+
+  $('bandeja').innerHTML = (bandeja.datos.notificaciones ?? []).map((n) =>
+    `<div class="${n.tipo.includes('cancel') ? 'err' : 'ok'}">${n.tipo} · ${n.reservaId ?? ''} →
+     ${(n.envios ?? []).map((e) => e.canal).join(', ')}</div>`).join('') || '<div style="color:var(--tenue)">Sin notificaciones todavía</div>';
+}
+
+cargarEventos();
+refrescar();
+setInterval(refrescar, 2000);
+</script>
+</body>
+</html>
