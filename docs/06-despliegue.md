@@ -165,4 +165,4 @@ soportar el mismo pico exigiría mantener la capacidad máxima **todo el mes**.
 ---
 
 **Anterior:** [5. Plan de pruebas](05-plan-de-pruebas.md) ·
-**Volver al** [informe](../informe/INFORME.md)
+**Volver al** [README](../README.md)

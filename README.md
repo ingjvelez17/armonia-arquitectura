@@ -12,8 +12,6 @@ Arquitectura de Software · Unidad 1 · Actividad 2 (ABP)
 
 | Si quieres… | Abre |
 |---|---|
-| **Leer el informe** | [`informe/INFORME.pdf`](informe/INFORME.pdf) — 18 páginas |
-| **Ver las diapositivas** | [`presentacion/PRESENTACION.pdf`](presentacion/PRESENTACION.pdf) — 23 diapositivas |
 | **Ejecutar el prototipo** | `cd prototipo && npm start` → <http://127.0.0.1:8080> |
 | **Ver los patrones en acción** | `cd prototipo && npm run demo` |
 | **Verificar que funciona** | `cd prototipo && npm test` → 41 pruebas |
@@ -54,15 +52,6 @@ esos incidentes, verificados con **41 pruebas automatizadas**.
 
 ```
 .
-├── informe/
-│   ├── INFORME.md / INFORME.pdf     informe técnico (18 pág.)
-│   ├── estilo-informe.css           maquetación de impresión
-│   └── md-to-pdf.config.js          para regenerar el PDF
-│
-├── presentacion/
-│   ├── PRESENTACION.md              fuente Marp (23 diapositivas)
-│   └── PRESENTACION.pdf / .pptx     exportadas y listas
-│
 ├── docs/
 │   ├── 00-caso-de-estudio.md        empresa, restricciones y expectativas
 │   ├── 01-analisis-requisitos.md    13 RF + 16 RNF con criterios de aceptación
@@ -100,19 +89,6 @@ Para regenerarlos:
 ```bash
 npx --yes @mermaid-js/mermaid-cli -i docs/diagramas/01-casos-de-uso.mmd \
   -o docs/diagramas/svg/01-casos-de-uso.svg -b "#0d1117"
-```
-
----
-
-## Regenerar los documentos
-
-```bash
-# Informe en PDF
-npx --yes md-to-pdf --config-file informe/md-to-pdf.config.js informe/INFORME.md
-
-# Diapositivas en PDF y PowerPoint
-npx --yes @marp-team/marp-cli presentacion/PRESENTACION.md --pdf  --allow-local-files --no-stdin
-npx --yes @marp-team/marp-cli presentacion/PRESENTACION.md --pptx --allow-local-files --no-stdin
 ```
 
 ---
