@@ -1,0 +1,76 @@
+%% Diagrama de componentes - que patron vive en cada servicio
+flowchart TB
+    subgraph gw["API GATEWAY :8080"]
+        direction TB
+        g1["Gateway Routing"]
+        g2["Gateway Aggregation / BFF"]
+        g3["Gateway Offloading<br/>auth, CORS, correlacion"]
+        g4["Throttling<br/>token bucket"]
+        g5["Circuit Breaker por ruta"]
+    end
+
+    subgraph cat["CATALOGO :8081"]
+        direction TB
+        c1["Cache-Aside<br/>anti-estampida"]
+        c2["CQRS - lado de lectura"]
+        c3["Materialized View"]
+        c4["Repository"]
+    end
+
+    subgraph res["RESERVAS :8082"]
+        direction TB
+        r1["Saga orquestada"]
+        r2["Compensating Transaction"]
+        r3["Idempotent Receiver"]
+        r4["Optimistic Offline Lock"]
+        r5["Strategy - tarifas"]
+        r6["Scheduler Agent Supervisor"]
+    end
+
+    subgraph pag["PAGOS :8083"]
+        direction TB
+        p1["Adapter - 3 pasarelas"]
+        p2["Idempotent Receiver"]
+        p3["Anti-Corruption Layer"]
+        p4["Inyeccion de caos"]
+    end
+
+    subgraph not["NOTIFICACIONES :8084"]
+        direction TB
+        n1["Competing Consumers"]
+        n2["Observer - 3 canales"]
+        n3["Reintento y DLQ"]
+    end
+
+    subgraph bro["BROKER :8085"]
+        direction TB
+        b1["Publisher-Subscriber"]
+        b2["Queue-Based Load Leveling"]
+        b3["Arrendamiento con<br/>visibility timeout"]
+        b4["Dead Letter Queue"]
+    end
+
+    subgraph lib["BIBLIOTECA COMPARTIDA (lib/)"]
+        direction LR
+        l1["Ambassador<br/>cliente-servicio.js"]
+        l2["Retry + Circuit Breaker<br/>+ Bulkhead + Timeout"]
+        l3["External Configuration<br/>Store (Singleton)"]
+        l4["Health Endpoint<br/>Monitoring"]
+        l5["Correlation Identifier"]
+    end
+
+    gw --> cat
+    gw --> res
+    gw --> pag
+    gw --> not
+    res --> cat
+    res --> pag
+    res -.-> bro
+    bro -.-> not
+    bro -.-> cat
+
+    lib -.->|usada por| gw
+    lib -.->|usada por| cat
+    lib -.->|usada por| res
+    lib -.->|usada por| pag
+    lib -.->|usada por| not

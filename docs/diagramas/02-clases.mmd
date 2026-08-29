@@ -1,0 +1,151 @@
+%% Diagrama de clases - vista de diseño del prototipo
+%% Solo se modelan las clases que materializan un patron o una regla de negocio.
+classDiagram
+    direction LR
+
+    %% ============ Dominio: Reservas ============
+    class Reserva {
+        +String id
+        +String eventoId
+        +String localidad
+        +int cantidad
+        +String cliente
+        +EstadoReserva estado
+        +int totalCOP
+        +String transaccionId
+        +Paso[] pasos
+        +String correlationId
+        +confirmar()
+        +cancelar(motivo)
+        +expirar()
+    }
+
+    class LineaDeInventario {
+        +String id
+        +String eventoId
+        +String localidad
+        +int capacidad
+        +int vendidas
+        +int reservadas
+        +int version
+        +int disponibles()
+    }
+
+    class OrquestadorDeSaga {
+        -ClienteServicio catalogo
+        -ClienteServicio pagos
+        -Publicador bus
+        +ejecutarSagaDeCompra(datos) Reserva
+        -reservarCupo(peticion)
+        -obtenerPrecioBase(peticion)
+        -cobrar(peticion)
+        -liberarCupo(peticion)
+    }
+
+    %% ============ Strategy: tarifas ============
+    class EstrategiaDeTarifa {
+        <<abstract>>
+        +String nombre
+        +calcular(contexto) Tarifa
+    }
+    class TarifaGeneral
+    class TarifaEstudiante
+    class TarifaClubDeFans
+    class TarifaDinamica
+
+    EstrategiaDeTarifa <|-- TarifaGeneral
+    EstrategiaDeTarifa <|-- TarifaEstudiante
+    EstrategiaDeTarifa <|-- TarifaClubDeFans
+    EstrategiaDeTarifa <|-- TarifaDinamica
+
+    %% ============ Adapter: pasarelas ============
+    class AdaptadorDePasarela {
+        <<abstract>>
+        +String nombre
+        +autorizar(peticion) ResultadoAutorizacion
+        +reversar(peticion) ResultadoReverso
+    }
+    class AdaptadorTarjeta
+    class AdaptadorPSE
+    class AdaptadorBilletera
+
+    AdaptadorDePasarela <|-- AdaptadorTarjeta
+    AdaptadorDePasarela <|-- AdaptadorPSE
+    AdaptadorDePasarela <|-- AdaptadorBilletera
+
+    %% ============ Observer: notificaciones ============
+    class DespachadorDeNotificaciones {
+        -CanalDeNotificacion[] canales
+        +registrar(canal)
+        +difundir(mensaje) Envio[]
+    }
+    class CanalDeNotificacion {
+        <<abstract>>
+        +String nombre
+        +interesadoEn(tipo) boolean
+        +enviar(mensaje) Envio
+    }
+    class CanalCorreo
+    class CanalSMS
+    class CanalPushApp
+
+    CanalDeNotificacion <|-- CanalCorreo
+    CanalDeNotificacion <|-- CanalSMS
+    CanalDeNotificacion <|-- CanalPushApp
+    DespachadorDeNotificaciones o-- CanalDeNotificacion : observadores
+
+    %% ============ Infraestructura compartida ============
+    class ClienteServicio {
+        +String nombre
+        -Cortacircuitos cortacircuitos
+        -Mamparo mamparo
+        +invocar(metodo, ruta, opciones)
+        +instantanea()
+    }
+    class Cortacircuitos {
+        +EstadoCircuito estado
+        +int fallosConsecutivos
+        +ejecutar(operacion, respaldo, cuentaComoFallo)
+    }
+    class Mamparo {
+        +int concurrenciaMaxima
+        +ejecutar(operacion)
+    }
+    class LimitadorDeTasa {
+        +int capacidad
+        +permitir(clave) Veredicto
+    }
+    class CacheEnMemoria {
+        +int ttlMs
+        +resolver(clave, cargarDelOrigen) Resultado
+        +invalidar(clave)
+    }
+    class RepositorioEnMemoria {
+        +buscarPorId(id)
+        +guardar(entidad)
+        +guardarConVersion(entidad, version)
+    }
+    class Publicador {
+        +publicar(topico, tipo, datos, correlationId)
+    }
+    class Consumidor {
+        +String cola
+        +String identidad
+        +iniciar()
+        +detener()
+    }
+
+    ClienteServicio *-- Cortacircuitos
+    ClienteServicio *-- Mamparo
+
+    %% ============ Relaciones entre agregados ============
+    OrquestadorDeSaga ..> Reserva : crea
+    OrquestadorDeSaga ..> LineaDeInventario : reserva y confirma
+    OrquestadorDeSaga ..> EstrategiaDeTarifa : usa
+    OrquestadorDeSaga --> ClienteServicio : llamadas salientes
+    OrquestadorDeSaga --> Publicador : eventos de dominio
+    OrquestadorDeSaga --> RepositorioEnMemoria : persistencia
+
+    AdaptadorDePasarela <.. ClienteServicio : invocado via pagos
+    Consumidor ..> DespachadorDeNotificaciones : entrega mensajes
+    CacheEnMemoria <.. RepositorioEnMemoria : cache-aside

@@ -1,0 +1,76 @@
+%% Diagrama de secuencia - compra de boletas (saga orquestada, camino feliz)
+sequenceDiagram
+    autonumber
+    actor C as Comprador
+    participant G as API Gateway
+    participant R as Servicio de Reservas
+    participant K as Servicio de Catalogo
+    participant P as Servicio de Pagos
+    participant X as Pasarela externa
+    participant B as Broker de mensajes
+    participant N as Servicio de Notificaciones
+
+    C->>G: POST /api/reservas<br/>idempotency-key: k1
+    activate G
+    Note over G: Gateway Offloading:<br/>valida API key, aplica limite<br/>de tasa y genera correlation id
+
+    G->>R: POST /reservas (x-correlation-id)
+    activate R
+
+    Note over R: Idempotent Receiver:<br/>k1 no vista antes, se procesa
+
+    rect rgb(28, 48, 34)
+        Note over R: PASO 1 - Reservar cupo
+        R->>R: leer linea de inventario (v=41)
+        R->>R: guardarConVersion(v=41)
+        Note right of R: Bloqueo optimista.<br/>Si otro comprador cambio la<br/>version, se reintenta el ciclo.
+    end
+
+    rect rgb(28, 40, 52)
+        Note over R: PASO 2 - Calcular tarifa
+        R->>K: GET /eventos/EVT-002
+        activate K
+        K-->>R: precio base por localidad
+        deactivate K
+        R->>R: Strategy.calcular(tarifa estudiante)
+    end
+
+    R-)B: publicar reserva.creada
+    Note over B,N: Asincrono: la compra NO espera
+
+    rect rgb(52, 44, 28)
+        Note over R: PASO 3 - Cobrar
+        R->>P: POST /cobros<br/>idempotency-key: cobro-RES-123
+        activate P
+        Note over P: Adapter: traduce a la API<br/>del proveedor elegido
+        P->>X: charge(amount_cents, holder)
+        X-->>P: APPROVED, auth_code
+        P-->>R: 201 transaccionId
+        deactivate P
+    end
+
+    rect rgb(28, 48, 34)
+        Note over R: PASO 4 - Confirmar
+        R->>R: restar de reservadas, sumar a vendidas
+        R->>R: estado = CONFIRMADA
+    end
+
+    R-)B: publicar reserva.confirmada
+    R-->>G: 201 Created (reserva)
+    deactivate R
+    G-->>C: 201 Created
+    deactivate G
+
+    Note over C: El comprador ya tiene respuesta.<br/>Lo que sigue ocurre en segundo plano.
+
+    B->>N: arrendar mensaje (competing consumers)
+    activate N
+    N->>N: Observer: difunde a correo, SMS y push
+    N-->>B: confirmar mensaje
+    deactivate N
+
+    B->>K: arrendar reserva.confirmada
+    activate K
+    K->>K: actualizar vista materializada (CQRS)
+    K-->>B: confirmar mensaje
+    deactivate K

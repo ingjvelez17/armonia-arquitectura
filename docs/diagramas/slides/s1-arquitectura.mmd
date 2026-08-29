@@ -1,0 +1,28 @@
+%% Version simplificada para diapositiva 16:9. La completa: 06-componentes.mmd
+flowchart LR
+    cliente["Navegador<br/>App movil"]
+
+    gw["<b>API GATEWAY</b><br/>ruteo · agregacion<br/>auth · limite de tasa"]
+
+    cat["<b>CATALOGO</b><br/>Cache-Aside<br/>CQRS"]
+    res["<b>RESERVAS</b><br/>Saga · bloqueo<br/>optimista"]
+    pag["<b>PAGOS</b><br/>3 adaptadores<br/>idempotencia"]
+
+    bro["<b>BROKER</b><br/>colas · DLQ"]
+    not["<b>NOTIFICACIONES</b><br/>2 consumidores<br/>en competencia"]
+
+    cliente --> gw
+    gw --> cat
+    gw --> res
+    res --> cat
+    res --> pag
+    res -. eventos .-> bro
+    bro -. consume .-> not
+    bro -. consume .-> cat
+
+    classDef borde fill:#16202b,stroke:#4493f8,stroke-width:3px,color:#e6edf3
+    classDef svc fill:#151b23,stroke:#8d99a8,stroke-width:2px,color:#e6edf3
+    classDef asinc fill:#241a10,stroke:#f0a202,stroke-width:2px,color:#e6edf3
+    class gw borde
+    class cat,res,pag svc
+    class bro,not asinc

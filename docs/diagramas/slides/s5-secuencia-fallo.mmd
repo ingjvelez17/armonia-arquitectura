@@ -1,0 +1,27 @@
+%% Version simplificada para diapositiva. La completa: 04-secuencia-compensacion.mmd
+sequenceDiagram
+    autonumber
+    actor C as Comprador
+    participant R as Reservas
+    participant A as Embajador
+    participant P as Pagos
+
+    C->>R: comprar
+    R->>R: 1 - reservar cupo (OK)
+    R->>A: 3 - cobrar
+    A->>P: intento 1
+    P--xA: 503
+    A->>P: intento 2 (espera 120 ms)
+    P--xA: 503
+    A->>P: intento 3 (espera 240 ms)
+    P--xA: 503
+    A--xR: agotados los reintentos
+    R->>R: COMPENSAR: devolver el cupo
+    R-->>C: 503 - no se realizo ningun cobro
+
+    Note over A,P: Tras 4 fallos el circuito se ABRE
+
+    C->>R: comprar (siguiente cliente)
+    R->>A: cobrar
+    A--xR: circuito ABIERTO - 1 ms, sin tocar la red
+    R-->>C: 503 inmediato

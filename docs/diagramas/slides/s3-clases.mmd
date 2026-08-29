@@ -1,0 +1,47 @@
+%% Version simplificada para diapositiva. La completa: 02-clases.mmd
+%% Se muestran solo las dos jerarquias que demuestran el principio abierto/cerrado.
+classDiagram
+    direction LR
+
+    class LineaDeInventario {
+        +int capacidad
+        +int vendidas
+        +int reservadas
+        +int version
+    }
+
+    class OrquestadorDeSaga {
+        +ejecutarSagaDeCompra()
+        -reservarCupo()
+        -cobrar()
+        -liberarCupo()
+    }
+
+    class EstrategiaDeTarifa {
+        <<abstract>>
+        +calcular(contexto)
+    }
+    class TarifaGeneral
+    class TarifaEstudiante
+    class TarifaDinamica
+
+    class AdaptadorDePasarela {
+        <<abstract>>
+        +autorizar(peticion)
+        +reversar(peticion)
+    }
+    class AdaptadorTarjeta
+    class AdaptadorPSE
+    class AdaptadorBilletera
+
+    EstrategiaDeTarifa <|-- TarifaGeneral
+    EstrategiaDeTarifa <|-- TarifaEstudiante
+    EstrategiaDeTarifa <|-- TarifaDinamica
+
+    AdaptadorDePasarela <|-- AdaptadorTarjeta
+    AdaptadorDePasarela <|-- AdaptadorPSE
+    AdaptadorDePasarela <|-- AdaptadorBilletera
+
+    OrquestadorDeSaga ..> LineaDeInventario : version = sin sobreventa
+    OrquestadorDeSaga ..> EstrategiaDeTarifa : Strategy
+    OrquestadorDeSaga ..> AdaptadorDePasarela : Adapter

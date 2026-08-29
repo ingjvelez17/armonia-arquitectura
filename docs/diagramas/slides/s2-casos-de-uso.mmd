@@ -1,0 +1,32 @@
+%% Version simplificada para diapositiva. La completa: 01-casos-de-uso.mmd
+flowchart LR
+    comprador["Comprador"]
+
+    subgraph sistema["Plataforma Armonia"]
+        direction TB
+        uc1(("Consultar<br/>catalogo"))
+        uc3(("Comprar<br/>boletas"))
+        uc10(("Procesar<br/>pago"))
+        uc12(("Notificar"))
+        uc14(("Compensar<br/>compra fallida"))
+        uc13(("Liberar cupo<br/>por expiracion"))
+
+        uc3 -. include .-> uc10
+        uc3 -. include .-> uc12
+        uc3 -. extend .-> uc14
+    end
+
+    pasarela["Pasarela de pago<br/>EXTERNO"]
+    mensajeria["Mensajeria<br/>EXTERNO"]
+    reloj["Reloj del sistema"]
+
+    comprador --- uc1
+    comprador --- uc3
+    uc10 --- pasarela
+    uc12 --- mensajeria
+    uc13 --- reloj
+
+    classDef actor fill:#16202b,stroke:#4493f8,stroke-width:3px,color:#e6edf3
+    classDef externo fill:#241a10,stroke:#f0a202,stroke-width:3px,color:#e6edf3
+    class comprador actor
+    class pasarela,mensajeria,reloj externo

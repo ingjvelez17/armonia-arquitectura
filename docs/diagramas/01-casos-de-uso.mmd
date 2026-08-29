@@ -1,0 +1,66 @@
+%% Diagrama de casos de uso - Plataforma Armonia S.A.S.
+%% Notacion UML: elipses = casos de uso, rectangulos = actores,
+%% el recuadro central es la frontera del sistema.
+%% Actores primarios a la izquierda, secundarios (sistemas) a la derecha.
+flowchart LR
+
+    subgraph primarios[" "]
+        direction TB
+        comprador["Comprador"]
+        admin["Administrador<br/>de catalogo"]
+        operador["Operador<br/>de plataforma"]
+    end
+
+    subgraph sistema["Plataforma de boleteria Armonia"]
+        direction TB
+
+        uc1(("Consultar<br/>catalogo"))
+        uc2(("Ver detalle y<br/>disponibilidad"))
+        uc3(("Comprar<br/>boletas"))
+        uc4(("Consultar mis<br/>reservas"))
+        uc5(("Solicitar<br/>reembolso"))
+        uc11(("Reservar<br/>cupo"))
+        uc10(("Procesar<br/>pago"))
+        uc12(("Notificar al<br/>comprador"))
+        uc14(("Compensar<br/>compra fallida"))
+        uc13(("Liberar cupo<br/>por expiracion"))
+        uc6(("Publicar<br/>evento"))
+        uc7(("Definir precios<br/>y localidades"))
+        uc8(("Monitorear<br/>salud"))
+        uc9(("Inspeccionar<br/>trazas"))
+
+        uc3 -. include .-> uc11
+        uc3 -. include .-> uc10
+        uc3 -. include .-> uc12
+        uc5 -. include .-> uc10
+        uc3 -. extend .-> uc14
+        uc11 -. extend .-> uc13
+    end
+
+    subgraph secundarios[" "]
+        direction TB
+        pasarela["Pasarela de pago<br/>(sistema externo)"]
+        mensajeria["Proveedor de<br/>mensajeria (externo)"]
+        reloj["Reloj del sistema<br/>(actor temporal)"]
+    end
+
+    comprador --- uc1
+    comprador --- uc2
+    comprador --- uc3
+    comprador --- uc4
+    comprador --- uc5
+    admin --- uc6
+    admin --- uc7
+    operador --- uc8
+    operador --- uc9
+
+    uc10 --- pasarela
+    uc12 --- mensajeria
+    uc13 --- reloj
+
+    classDef actor fill:#16202b,stroke:#4493f8,stroke-width:2px,color:#e6edf3
+    classDef externo fill:#241a10,stroke:#f0a202,stroke-width:2px,color:#e6edf3
+    classDef invisible fill:none,stroke:none
+    class comprador,admin,operador actor
+    class pasarela,mensajeria,reloj externo
+    class primarios,secundarios invisible

@@ -1,0 +1,101 @@
+%% Diagrama de despliegue - topologia objetivo en nube publica
+%% Cada recuadro con borde es un nodo de despliegue; dentro van los artefactos.
+flowchart TB
+    subgraph internet["Internet"]
+        nav["Navegador web"]
+        app["App movil<br/>iOS / Android"]
+    end
+
+    subgraph borde["Borde - CDN y WAF"]
+        cdn["CDN<br/>contenido estatico<br/>y cache de imagenes"]
+        waf["WAF + proteccion DDoS<br/>TLS 1.3"]
+    end
+
+    subgraph nube["Nube publica - region us-east / sa-east"]
+
+        subgraph publica["Subred publica"]
+            lb["Balanceador de carga<br/>con verificacion de salud"]
+        end
+
+        subgraph privada["Subred privada - orquestador de contenedores"]
+            direction TB
+            gw["api-gateway<br/>2 a 10 replicas<br/>autoescalado por CPU"]
+
+            subgraph lectura["Servicios de lectura"]
+                cat["catalogo<br/>3 a 20 replicas"]
+            end
+
+            subgraph escritura["Servicios de escritura"]
+                res["reservas<br/>3 a 30 replicas"]
+                pag["pagos<br/>2 a 10 replicas"]
+            end
+
+            subgraph asincrono["Trabajadores asincronos"]
+                not["notificaciones<br/>2 a 50 replicas<br/>autoescalado por longitud de cola"]
+            end
+        end
+
+        subgraph datos["Subred de datos - sin salida a Internet"]
+            dbcat[("PostgreSQL<br/>catalogo")]
+            dbres[("PostgreSQL<br/>reservas<br/>replica de lectura")]
+            dbpag[("PostgreSQL<br/>pagos<br/>cifrado en reposo")]
+            redis[("Redis<br/>cache distribuida")]
+            cola[["Cola gestionada<br/>SQS / Service Bus<br/>+ DLQ"]]
+        end
+
+        subgraph observabilidad["Observabilidad"]
+            logs["Agregador de logs<br/>correlation id"]
+            metricas["Metricas y alertas"]
+            trazas["Trazado distribuido"]
+        end
+    end
+
+    subgraph externos["Proveedores externos"]
+        psetc["Pasarela de tarjeta"]
+        pse["PSE"]
+        billetera["Billetera digital"]
+        correo["Proveedor de correo y SMS"]
+    end
+
+    nav --> cdn
+    app --> waf
+    cdn --> waf
+    waf --> lb
+    lb --> gw
+
+    gw --> cat
+    gw --> res
+    gw --> pag
+    gw --> not
+
+    res --> cat
+    res --> pag
+
+    cat --> dbcat
+    cat --> redis
+    res --> dbres
+    pag --> dbpag
+
+    res -.->|publica eventos| cola
+    cola -.->|consume| not
+    cola -.->|consume| cat
+
+    pag --> psetc
+    pag --> pse
+    pag --> billetera
+    not --> correo
+
+    gw -.-> logs
+    cat -.-> logs
+    res -.-> logs
+    pag -.-> logs
+    not -.-> logs
+    logs --> trazas
+    logs --> metricas
+
+    classDef svc fill:#16202b,stroke:#4493f8,color:#e6edf3
+    classDef db fill:#1d1a12,stroke:#f0a202,color:#e6edf3
+    classDef ext fill:#2b1616,stroke:#f85149,color:#e6edf3
+    class gw,cat,res,pag,not svc
+    class dbcat,dbres,dbpag,redis,cola db
+    class psetc,pse,billetera,correo ext

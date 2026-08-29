@@ -1,0 +1,63 @@
+%% Diagrama de secuencia - fallo del pago, compensacion y apertura del cortacircuitos
+sequenceDiagram
+    autonumber
+    actor C as Comprador
+    participant G as API Gateway
+    participant R as Servicio de Reservas
+    participant A as Embajador<br/>(retry + cortacircuitos)
+    participant P as Servicio de Pagos
+    participant B as Broker de mensajes
+
+    C->>G: POST /api/reservas
+    G->>R: POST /reservas
+    activate R
+
+    R->>R: PASO 1: reservar cupo (OK)
+    R->>R: PASO 2: calcular tarifa (OK)
+    R-)B: publicar reserva.creada
+
+    rect rgb(58, 30, 30)
+        Note over R,P: PASO 3 - El cobro falla
+        R->>A: cobrar()
+        activate A
+        A->>P: POST /cobros (intento 1)
+        P--xA: 503 pasarela no disponible
+        Note over A: Retry: espera 120 ms + jitter
+        A->>P: POST /cobros (intento 2)
+        P--xA: 503
+        Note over A: Retry: espera 240 ms + jitter
+        A->>P: POST /cobros (intento 3)
+        P--xA: 503
+        A->>A: registrar fallo en el cortacircuitos
+        A--xR: agotados los reintentos
+        deactivate A
+    end
+
+    rect rgb(58, 44, 24)
+        Note over R: COMPENSACION
+        R->>R: estado = CANCELADA
+        R->>R: liberarCupo: devolver n al inventario
+        Note right of R: El inventario queda<br/>exactamente como estaba.<br/>Cero boletas perdidas.
+    end
+
+    R-)B: publicar reserva.cancelada
+    R-->>G: 503 con detalle de los pasos
+    deactivate R
+    G-->>C: 503 "no se realizo ningun cobro"
+
+    Note over C,P: Tras 4 fallos consecutivos el circuito se ABRE
+
+    C->>G: POST /api/reservas (siguiente comprador)
+    G->>R: POST /reservas
+    activate R
+    R->>R: PASO 1 y 2 (OK)
+    R->>A: cobrar()
+    activate A
+    A--xR: Cortacircuitos ABIERTO (1 ms, sin tocar la red)
+    deactivate A
+    R->>R: COMPENSACION inmediata
+    R-->>G: 503 en milisegundos
+    deactivate R
+    G-->>C: 503 "intente en unos minutos"
+
+    Note over A,P: Pasados 5 s el circuito pasa a SEMIABIERTO<br/>y deja pasar UNA peticion de prueba.<br/>Si funciona, vuelve a CERRADO sin intervencion humana.

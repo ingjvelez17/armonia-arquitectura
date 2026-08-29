@@ -1,0 +1,47 @@
+%% Version simplificada para diapositiva. La completa: 05-despliegue.mmd
+flowchart LR
+    subgraph borde["Borde"]
+        direction TB
+        waf["CDN + WAF<br/>TLS 1.3"]
+        lb["Balanceador"]
+        waf --> lb
+    end
+
+    subgraph privada["Subred privada · contenedores"]
+        direction TB
+        gw["api-gateway<br/><b>2 a 10 replicas</b>"]
+        cat["catalogo<br/><b>3 a 20</b>"]
+        res["reservas<br/><b>3 a 30</b>"]
+        pag["pagos<br/><b>2 a 10</b>"]
+        not["notificaciones<br/><b>2 a 50</b><br/>por longitud de cola"]
+    end
+
+    subgraph datos["Subred de datos · sin salida a Internet"]
+        direction TB
+        db1[("PostgreSQL<br/>catalogo")]
+        db2[("PostgreSQL<br/>reservas")]
+        db3[("PostgreSQL<br/>pagos")]
+        redis[("Redis")]
+        cola[["Cola gestionada<br/>+ DLQ"]]
+    end
+
+    externos["Pasarelas<br/>Mensajeria<br/>EXTERNOS"]
+
+    lb --> gw
+    gw --> cat
+    gw --> res
+    res --> pag
+    cat --> db1
+    cat --> redis
+    res --> db2
+    pag --> db3
+    res -.-> cola
+    cola -.-> not
+    pag --> externos
+
+    classDef svc fill:#16202b,stroke:#4493f8,stroke-width:2px,color:#e6edf3
+    classDef db fill:#241a10,stroke:#f0a202,stroke-width:2px,color:#e6edf3
+    classDef ext fill:#2b1616,stroke:#f85149,stroke-width:2px,color:#e6edf3
+    class gw,cat,res,pag,not svc
+    class db1,db2,db3,redis,cola db
+    class externos ext

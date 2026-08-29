@@ -1,0 +1,25 @@
+%% Version simplificada para diapositiva. La completa: 03-secuencia-compra.mmd
+sequenceDiagram
+    autonumber
+    actor C as Comprador
+    participant G as Gateway
+    participant R as Reservas
+    participant P as Pagos
+    participant B as Broker
+    participant N as Notificaciones
+
+    C->>G: POST /reservas + idempotency-key
+    G->>R: reenvia con correlation id
+    R->>R: 1 - reservar cupo (bloqueo optimista)
+    R->>R: 2 - calcular tarifa (Strategy)
+    R->>P: 3 - cobrar (Adapter)
+    P-->>R: aprobado
+    R->>R: 4 - confirmar
+    R-)B: reserva.confirmada
+    R-->>G: 201 Created
+    G-->>C: 201 Created
+
+    Note over C,N: Aqui termina la espera del comprador
+
+    B->>N: arrendar (competing consumers)
+    N->>N: correo, SMS y push (Observer)

@@ -1,0 +1,33 @@
+%% Diagrama de estados - ciclo de vida de una Reserva
+%% Cada transicion corresponde a un paso o a una compensacion de la saga.
+stateDiagram-v2
+    direction LR
+
+    [*] --> PENDIENTE : cupo reservado<br/>(bloqueo optimista)
+
+    PENDIENTE --> CONFIRMADA : cobro aprobado<br/>/ publicar reserva.confirmada
+    PENDIENTE --> CANCELADA : cobro rechazado o<br/>pasarela caida<br/>/ COMPENSAR: liberar cupo
+    PENDIENTE --> EXPIRADA : venció el TTL<br/>/ COMPENSAR: liberar cupo
+
+    CONFIRMADA --> REEMBOLSADA : reembolso solicitado<br/>/ reversar cobro + liberar cupo
+
+    CANCELADA --> [*]
+    EXPIRADA --> [*]
+    REEMBOLSADA --> [*]
+    CONFIRMADA --> [*] : evento realizado
+
+    note right of PENDIENTE
+        Estado de vida corta.
+        El cupo ya esta apartado
+        pero aun no vendido.
+        Un barredor periodico
+        rescata las que quedan
+        colgadas por una caida.
+    end note
+
+    note right of CONFIRMADA
+        Unico estado en el que
+        existe cobro real.
+        Solo desde aqui se puede
+        reembolsar.
+    end note
