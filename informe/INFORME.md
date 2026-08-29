@@ -26,7 +26,7 @@ Actividad 2 — Aprendizaje Basado en Proyectos
 
 <br>
 
-**Repositorio del prototipo:** `<URL del repositorio>`
+**Repositorio del prototipo:** https://github.com/ingjvelez17/armonia-arquitectura
 **Video de sustentación:** `<URL de YouTube, no listado>`
 
 </div>
@@ -857,7 +857,7 @@ Wiggins, A. (2017). *The twelve-factor app*. https://12factor.net/
 
 | Recurso | Ubicación |
 |---|---|
-| Repositorio del código | `<URL del repositorio>` |
+| Repositorio del código | https://github.com/ingjvelez17/armonia-arquitectura |
 | Video de sustentación (no listado) | `<URL de YouTube>` |
 | Despliegue en la nube | `<URL del gateway>` |
 
@@ -874,8 +874,8 @@ La carpeta [`docs/`](../docs/) del repositorio amplía cada capítulo: `00-caso-
 ### Anexo C — Cómo reproducir los resultados
 
 ```bash
-git clone <URL del repositorio>
-cd <repositorio>/prototipo
+git clone https://github.com/ingjvelez17/armonia-arquitectura.git
+cd armonia-arquitectura/prototipo
 
 npm test        # 41 pruebas automatizadas
 npm run carga   # prueba de carga con métricas p50/p95/p99
