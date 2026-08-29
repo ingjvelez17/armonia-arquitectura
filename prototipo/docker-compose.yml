@@ -1,0 +1,92 @@
+# =============================================================================
+#  Despliegue local equivalente al de la nube.
+# =============================================================================
+#
+# Cada microservicio es un contenedor independiente con su propio ciclo de
+# vida, su propia escala y su propia sonda de salud. La misma topologia se
+# traslada 1:1 a Azure Container Apps, AWS ECS/Fargate, Google Cloud Run o
+# Kubernetes: cambia el fichero de despliegue, no la aplicacion.
+#
+#   docker compose up --build
+#   http://localhost:8080
+
+services:
+
+  broker:
+    build: .
+    environment:
+      SERVICIO: broker
+      PUERTO: 8085
+      PUERTO_BROKER: 8085
+    ports: ["8085:8085"]
+    networks: [armonia]
+
+  catalogo:
+    build: .
+    environment:
+      SERVICIO: catalogo
+      PUERTO: 8081
+      PUERTO_CATALOGO: 8081
+      URL_BROKER: http://broker:8085
+      TTL_CACHE_S: 30
+    ports: ["8081:8081"]
+    depends_on: [broker]
+    networks: [armonia]
+
+  pagos:
+    build: .
+    environment:
+      SERVICIO: pagos
+      PUERTO: 8083
+      PUERTO_PAGOS: 8083
+      TASA_FALLO_PAGOS: 0.15
+    ports: ["8083:8083"]
+    networks: [armonia]
+
+  reservas:
+    build: .
+    environment:
+      SERVICIO: reservas
+      PUERTO: 8082
+      PUERTO_RESERVAS: 8082
+      URL_CATALOGO: http://catalogo:8081
+      URL_PAGOS: http://pagos:8083
+      URL_BROKER: http://broker:8085
+    ports: ["8082:8082"]
+    depends_on: [catalogo, pagos, broker]
+    networks: [armonia]
+
+  notificaciones:
+    build: .
+    # Competing Consumers: dos replicas leen de la MISMA cola. Es la forma de
+    # escalar el consumo sin coordinar nada entre ellas.
+    deploy:
+      replicas: 2
+    environment:
+      SERVICIO: notificaciones
+      PUERTO: 8084
+      PUERTO_NOTIFICACIONES: 8084
+      URL_BROKER: http://broker:8085
+    depends_on: [broker]
+    networks: [armonia]
+
+  gateway:
+    build: .
+    environment:
+      SERVICIO: gateway
+      PUERTO: 8080
+      PUERTO_GATEWAY: 8080
+      URL_CATALOGO: http://catalogo:8081
+      URL_RESERVAS: http://reservas:8082
+      URL_PAGOS: http://pagos:8083
+      URL_NOTIFICACIONES: http://notificaciones:8084
+      URL_BROKER: http://broker:8085
+      LIMITE_RPM: 600
+      CLAVES_API: demo-armonia-2026,panel-interno
+    ports: ["8080:8080"]
+    depends_on: [catalogo, reservas, notificaciones]
+    networks: [armonia]
+
+networks:
+  armonia:
+    driver: bridge

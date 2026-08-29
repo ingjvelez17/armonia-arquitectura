@@ -1,0 +1,104 @@
+# =============================================================================
+#  Blueprint de despliegue en la nube (Render.com)
+# =============================================================================
+#
+# Render se eligio por ser un PaaS gratuito que despliega directo desde GitHub
+# y da HTTPS y DNS interno sin tarjeta de credito. La topologia es la misma que
+# se usaria en Azure Container Apps o AWS Fargate; solo cambia la sintaxis del
+# fichero. Cada microservicio es un servicio desplegable e independiente.
+#
+# Como publicar:
+#   1. Subir el repositorio a GitHub.
+#   2. En Render: New > Blueprint > seleccionar el repositorio.
+#   3. Render lee este fichero y crea los seis servicios.
+#
+# NOTA sobre el plan gratuito: los servicios "duermen" tras 15 minutos sin
+# trafico y tardan ~30 s en despertar. Para la grabacion del video conviene
+# abrir primero /api/salud y esperar a que devuelva "operativo".
+#
+# Si solo se dispone de UN servicio gratuito, usar en su lugar el modo
+# monolitico de demostracion: un unico servicio con SERVICIO=todos.
+
+services:
+
+  # ---------------------------------------------------------------------
+  - type: web
+    name: armonia-broker
+    runtime: docker
+    dockerfilePath: ./prototipo/Dockerfile
+    dockerContext: ./prototipo
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - { key: SERVICIO, value: broker }
+      - { key: PUERTO_BROKER, fromService: { type: web, name: armonia-broker, property: port } }
+
+  # ---------------------------------------------------------------------
+  - type: web
+    name: armonia-catalogo
+    runtime: docker
+    dockerfilePath: ./prototipo/Dockerfile
+    dockerContext: ./prototipo
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - { key: SERVICIO, value: catalogo }
+      - { key: TTL_CACHE_S, value: "30" }
+      - { key: URL_BROKER, fromService: { type: web, name: armonia-broker, property: hostport } }
+
+  # ---------------------------------------------------------------------
+  - type: web
+    name: armonia-pagos
+    runtime: docker
+    dockerfilePath: ./prototipo/Dockerfile
+    dockerContext: ./prototipo
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - { key: SERVICIO, value: pagos }
+      - { key: TASA_FALLO_PAGOS, value: "0.15" }
+
+  # ---------------------------------------------------------------------
+  - type: web
+    name: armonia-reservas
+    runtime: docker
+    dockerfilePath: ./prototipo/Dockerfile
+    dockerContext: ./prototipo
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - { key: SERVICIO, value: reservas }
+      - { key: URL_CATALOGO, fromService: { type: web, name: armonia-catalogo, property: hostport } }
+      - { key: URL_PAGOS, fromService: { type: web, name: armonia-pagos, property: hostport } }
+      - { key: URL_BROKER, fromService: { type: web, name: armonia-broker, property: hostport } }
+
+  # ---------------------------------------------------------------------
+  - type: web
+    name: armonia-notificaciones
+    runtime: docker
+    dockerfilePath: ./prototipo/Dockerfile
+    dockerContext: ./prototipo
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - { key: SERVICIO, value: notificaciones }
+      - { key: URL_BROKER, fromService: { type: web, name: armonia-broker, property: hostport } }
+
+  # ---------------------------------------------------------------------
+  # Unico servicio expuesto a Internet: el resto queda en la red privada.
+  - type: web
+    name: armonia-gateway
+    runtime: docker
+    dockerfilePath: ./prototipo/Dockerfile
+    dockerContext: ./prototipo
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - { key: SERVICIO, value: gateway }
+      - { key: LIMITE_RPM, value: "600" }
+      - { key: CLAVES_API, value: "demo-armonia-2026,panel-interno" }
+      - { key: URL_CATALOGO, fromService: { type: web, name: armonia-catalogo, property: hostport } }
+      - { key: URL_RESERVAS, fromService: { type: web, name: armonia-reservas, property: hostport } }
+      - { key: URL_PAGOS, fromService: { type: web, name: armonia-pagos, property: hostport } }
+      - { key: URL_NOTIFICACIONES, fromService: { type: web, name: armonia-notificaciones, property: hostport } }
+      - { key: URL_BROKER, fromService: { type: web, name: armonia-broker, property: hostport } }
