@@ -41,14 +41,19 @@ class ConfiguracionGlobal {
 
     /**
      * URLs internas. En la nube estas variables se inyectan con el DNS del
-     * proveedor (p. ej. http://catalogo.internal en Render / Azure Container Apps).
+     * proveedor. Render, en particular, resuelve `fromService.property:
+     * hostport` como "nombre-servicio:puerto" SIN esquema (asi lo documenta:
+     * "Use this value to connect to the service over the private network").
+     * Por eso se antepone "http://" solo si el valor no trae ya un esquema:
+     * el valor por defecto de desarrollo local ya lo incluye y no se toca.
      */
+    const conEsquema = (valor) => (/^https?:\/\//i.test(valor) ? valor : `http://${valor}`);
     this.servicios = {
-      catalogo: env('URL_CATALOGO', `http://${this.host}:${this.puertos.catalogo}`),
-      reservas: env('URL_RESERVAS', `http://${this.host}:${this.puertos.reservas}`),
-      pagos: env('URL_PAGOS', `http://${this.host}:${this.puertos.pagos}`),
-      notificaciones: env('URL_NOTIFICACIONES', `http://${this.host}:${this.puertos.notificaciones}`),
-      broker: env('URL_BROKER', `http://${this.host}:${this.puertos.broker}`),
+      catalogo: conEsquema(env('URL_CATALOGO', `http://${this.host}:${this.puertos.catalogo}`)),
+      reservas: conEsquema(env('URL_RESERVAS', `http://${this.host}:${this.puertos.reservas}`)),
+      pagos: conEsquema(env('URL_PAGOS', `http://${this.host}:${this.puertos.pagos}`)),
+      notificaciones: conEsquema(env('URL_NOTIFICACIONES', `http://${this.host}:${this.puertos.notificaciones}`)),
+      broker: conEsquema(env('URL_BROKER', `http://${this.host}:${this.puertos.broker}`)),
     };
 
     /** Parametros de resiliencia (Retry, Circuit Breaker, Throttling). */
