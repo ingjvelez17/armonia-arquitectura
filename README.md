@@ -61,9 +61,7 @@ esos incidentes, verificados con **41 pruebas automatizadas**.
 │
 ├── presentacion/
 │   ├── PRESENTACION.md              fuente Marp (23 diapositivas)
-│   ├── PRESENTACION.pdf / .pptx     exportadas y listas
-│   ├── GUION_VIDEO.md               guion cronometrado de 15 minutos
-│   └── COMO-GENERAR-LAS-DIAPOSITIVAS.md
+│   └── PRESENTACION.pdf / .pptx     exportadas y listas
 │
 ├── docs/
 │   ├── 00-caso-de-estudio.md        empresa, restricciones y expectativas
@@ -77,8 +75,7 @@ esos incidentes, verificados con **41 pruebas automatizadas**.
 │   └── diagramas/                   fuentes .mmd + svg/ + png/ + slides/
 │
 ├── prototipo/                       la malla de 6 microservicios
-├── render.yaml                      despliegue en Render.com
-└── ENTREGA.md                       qué falta por hacer antes de entregar
+└── render.yaml                      despliegue en Render.com
 ```
 
 ---
