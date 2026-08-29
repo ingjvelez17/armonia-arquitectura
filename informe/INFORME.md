@@ -859,7 +859,7 @@ Wiggins, A. (2017). *The twelve-factor app*. https://12factor.net/
 |---|---|
 | Repositorio del código | https://github.com/ingjvelez17/armonia-arquitectura |
 | Video de sustentación (no listado) | `<URL de YouTube>` |
-| Despliegue en la nube | `<URL del gateway>` |
+| Despliegue en la nube | https://armonia-gateway.onrender.com |
 
 ### Anexo B — Documentación complementaria
 

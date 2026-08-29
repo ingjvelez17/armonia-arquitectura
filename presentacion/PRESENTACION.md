@@ -392,7 +392,7 @@ La venta la valida siempre el almacén autoritativo.
 <br>
 
 **Repositorio:** https://github.com/ingjvelez17/armonia-arquitectura
-**Prototipo desplegado:** `<URL>`
+**Prototipo desplegado:** https://armonia-gateway.onrender.com
 
 <br>
 
