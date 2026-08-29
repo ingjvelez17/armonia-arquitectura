@@ -47,16 +47,27 @@ El archivo [`../render.yaml`](../render.yaml) es un *blueprint* que crea los sei
 
 1. Subir el repositorio a GitHub.
 2. En Render: **New → Blueprint** y seleccionar el repositorio.
-3. Render lee `render.yaml`, construye la imagen y despliega los seis servicios, inyectando el
-   DNS interno de cada uno en las variables `URL_*`.
-4. La URL pública del servicio `armonia-gateway` es la de la aplicación.
+3. Render lee `render.yaml`, construye la imagen y despliega los seis servicios, inyectando en
+   las variables `URL_*` la **URL pública** de cada uno (`https://armonia-<servicio>.onrender.com`).
+4. La URL del servicio `armonia-gateway` es la de la aplicación.
 
 **Advertencias del plan gratuito**, importantes si se va a grabar la demostración:
 
-- Los servicios se duermen tras 15 minutos sin tráfico y tardan ~30 s en despertar. Antes de
-  grabar, abrir `/api/salud` y esperar a que responda `operativo`.
+- Los servicios se duermen tras 15 minutos sin tráfico y tardan ~30-50 s en despertar. Antes de
+  grabar, conviene visitar la URL de **cada uno** de los seis servicios una vez (o hacer un par
+  de peticiones a `/api/salud` seguidas) y esperar a que responda `operativo`.
 - Solo hay 750 horas gratuitas al mes en total. Seis servicios las consumen rápido: conviene
   desplegar poco antes de grabar y suspenderlos después.
+- **Render documenta explícitamente:** *"Free web services can send private network requests,
+  but they can't receive them."* Con seis servicios en plan gratuito, ninguno puede recibir
+  tráfico de otro por la red privada. Por eso `render.yaml` hace que cada servicio llame a los
+  demás por su **URL pública** en vez de por `fromService`/`hostport`: es la misma vía por la
+  que el navegador llega al gateway, y sí acepta tráfico en el plan gratuito. La contrapartida es
+  una vuelta extra por Internet en cada llamada entre servicios (más latencia) y que los cinco
+  servicios internos quedan también expuestos públicamente, no solo el gateway. En un plan de
+  pago (Starter o superior) sí se puede recibir por la red privada, y ahí conviene volver a
+  `fromService`/`hostport` para menor latencia y para que los servicios internos dejen de tener
+  URL pública; el código de `lib/config.js` ya acepta ambos formatos sin cambios.
 
 **Si solo se dispone de un servicio gratuito**, existe un modo de contingencia: desplegar un
 único servicio con `SERVICIO=todos`, que arranca la malla completa dentro de un contenedor.

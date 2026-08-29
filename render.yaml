@@ -3,18 +3,39 @@
 # =============================================================================
 #
 # Render se eligio por ser un PaaS gratuito que despliega directo desde GitHub
-# y da HTTPS y DNS interno sin tarjeta de credito. La topologia es la misma que
-# se usaria en Azure Container Apps o AWS Fargate; solo cambia la sintaxis del
-# fichero. Cada microservicio es un servicio desplegable e independiente.
+# y da HTTPS sin tarjeta de credito. La topologia es la misma que se usaria en
+# Azure Container Apps o AWS Fargate; solo cambia la sintaxis del fichero.
+# Cada microservicio es un servicio desplegable e independiente.
 #
 # Como publicar:
 #   1. Subir el repositorio a GitHub.
 #   2. En Render: New > Blueprint > seleccionar el repositorio.
 #   3. Render lee este fichero y crea los seis servicios.
 #
-# NOTA sobre el plan gratuito: los servicios "duermen" tras 15 minutos sin
-# trafico y tardan ~30 s en despertar. Para la grabacion del video conviene
-# abrir primero /api/salud y esperar a que devuelva "operativo".
+# NOTA sobre el plan gratuito (importante, no es un detalle menor):
+#
+#   1. Los servicios "duermen" tras 15 minutos sin trafico y tardan ~30-50 s
+#      en despertar. Antes de grabar el video, conviene visitar la URL de
+#      CADA servicio una vez (o esperar a que /api/salud devuelva
+#      "operativo") para que ninguno responda lento en plena demostracion.
+#
+#   2. Render documenta explicitamente: "Free web services can send private
+#      network requests, but they can't receive them." Es decir, en el plan
+#      gratuito la RED PRIVADA solo sirve para salir, no para recibir. Con
+#      seis servicios gratuitos, ninguno puede recibir trafico de otro por
+#      esa via. Por eso aqui cada servicio llama a los demas por su URL
+#      PUBLICA (https://<nombre>.onrender.com), que si acepta trafico en el
+#      plan gratuito -es la misma via por la que el navegador llega al
+#      gateway-. La contrapartida es una vuelta extra por Internet en cada
+#      llamada entre servicios (mas latencia) y que los cinco servicios
+#      internos quedan tambien expuestos publicamente, no solo el gateway.
+#
+#      En un plan de pago (Starter o superior) SI se puede recibir por la
+#      red privada, y ahi conviene volver a fromService/hostport para cada
+#      URL_* de abajo: menor latencia y los servicios internos dejan de
+#      tener una URL publica. El codigo de la aplicacion ya soporta ambas
+#      formas sin cambios (ver lib/config.js): acepta tanto una URL completa
+#      como el formato "servicio:puerto" que da hostport.
 #
 # Si solo se dispone de UN servicio gratuito, usar en su lugar el modo
 # monolitico de demostracion: un unico servicio con SERVICIO=todos.
@@ -31,7 +52,6 @@ services:
     healthCheckPath: /health
     envVars:
       - { key: SERVICIO, value: broker }
-      - { key: PUERTO_BROKER, fromService: { type: web, name: armonia-broker, property: port } }
 
   # ---------------------------------------------------------------------
   - type: web
@@ -44,7 +64,7 @@ services:
     envVars:
       - { key: SERVICIO, value: catalogo }
       - { key: TTL_CACHE_S, value: "30" }
-      - { key: URL_BROKER, fromService: { type: web, name: armonia-broker, property: hostport } }
+      - { key: URL_BROKER, value: "https://armonia-broker.onrender.com" }
 
   # ---------------------------------------------------------------------
   - type: web
@@ -68,9 +88,9 @@ services:
     healthCheckPath: /health
     envVars:
       - { key: SERVICIO, value: reservas }
-      - { key: URL_CATALOGO, fromService: { type: web, name: armonia-catalogo, property: hostport } }
-      - { key: URL_PAGOS, fromService: { type: web, name: armonia-pagos, property: hostport } }
-      - { key: URL_BROKER, fromService: { type: web, name: armonia-broker, property: hostport } }
+      - { key: URL_CATALOGO, value: "https://armonia-catalogo.onrender.com" }
+      - { key: URL_PAGOS, value: "https://armonia-pagos.onrender.com" }
+      - { key: URL_BROKER, value: "https://armonia-broker.onrender.com" }
 
   # ---------------------------------------------------------------------
   - type: web
@@ -82,10 +102,11 @@ services:
     healthCheckPath: /health
     envVars:
       - { key: SERVICIO, value: notificaciones }
-      - { key: URL_BROKER, fromService: { type: web, name: armonia-broker, property: hostport } }
+      - { key: URL_BROKER, value: "https://armonia-broker.onrender.com" }
 
   # ---------------------------------------------------------------------
-  # Unico servicio expuesto a Internet: el resto queda en la red privada.
+  # En un plan gratuito los seis servicios quedan con URL publica (ver nota
+  # de arriba); en un plan de pago solo este necesitaria estarlo.
   - type: web
     name: armonia-gateway
     runtime: docker
@@ -97,8 +118,8 @@ services:
       - { key: SERVICIO, value: gateway }
       - { key: LIMITE_RPM, value: "600" }
       - { key: CLAVES_API, value: "demo-armonia-2026,panel-interno" }
-      - { key: URL_CATALOGO, fromService: { type: web, name: armonia-catalogo, property: hostport } }
-      - { key: URL_RESERVAS, fromService: { type: web, name: armonia-reservas, property: hostport } }
-      - { key: URL_PAGOS, fromService: { type: web, name: armonia-pagos, property: hostport } }
-      - { key: URL_NOTIFICACIONES, fromService: { type: web, name: armonia-notificaciones, property: hostport } }
-      - { key: URL_BROKER, fromService: { type: web, name: armonia-broker, property: hostport } }
+      - { key: URL_CATALOGO, value: "https://armonia-catalogo.onrender.com" }
+      - { key: URL_RESERVAS, value: "https://armonia-reservas.onrender.com" }
+      - { key: URL_PAGOS, value: "https://armonia-pagos.onrender.com" }
+      - { key: URL_NOTIFICACIONES, value: "https://armonia-notificaciones.onrender.com" }
+      - { key: URL_BROKER, value: "https://armonia-broker.onrender.com" }
