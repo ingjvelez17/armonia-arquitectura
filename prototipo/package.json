@@ -1,0 +1,26 @@
+{
+  "name": "armonia-cloud",
+  "version": "1.0.0",
+  "description": "Prototipo de arquitectura de microservicios en la nube para Armonia S.A.S. - Arquitectura de Software, Unidad 1",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node scripts/start-all.js",
+    "test": "node --test --test-timeout=180000 tests/*.test.js",
+    "test:unidad": "node --test tests/unidad.test.js",
+    "test:integracion": "node --test --test-timeout=180000 tests/integracion.test.js",
+    "demo": "node scripts/demo.js",
+    "carga": "node scripts/prueba-carga.js"
+  },
+  "keywords": [
+    "arquitectura-de-software",
+    "microservicios",
+    "cloud-design-patterns",
+    "uml"
+  ],
+  "author": "Juan Esteban Velez Venegas",
+  "license": "MIT",
+  "dependencies": {}
+}
